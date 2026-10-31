@@ -44,6 +44,7 @@ final class StripController {
     private var strips: [CGDirectDisplayID: StripWindow] = [:]
     private var bar: MenuBar?
     private let mirror = MenuMirror()
+    private var openMenu: NSMenu?
     private var capturing = false
 
     func start() {
@@ -91,8 +92,20 @@ final class StripController {
     func openMenus(from view: StripView) {
         guard let bar else { return }
         view.isOpen = true
-        mirror.tucked(for: bar).popUp(positioning: nil, at: NSPoint(x: bar.titleInset, y: 0), in: view)
+        let menu = mirror.tucked(for: bar)
+        openMenu = menu
+        menu.popUp(positioning: nil, at: NSPoint(x: bar.titleInset, y: 0), in: view)
+        openMenu = nil
         view.isOpen = false
+    }
+
+    func closeMenu() { openMenu?.cancelTracking() }
+
+    /// Kayıt için: ana ekrandaki şeritte uygulama adının ortası (AX koordinatında) ve menü başlıkları.
+    var demoTarget: (title: CGPoint, menus: [String])? {
+        guard let bar, let strip = strips[CGMainDisplayID()], strip.isVisible, let primary = NSScreen.screens.first?.frame else { return nil }
+        let x = strip.frame.minX + bar.titleInset + bar.appItemWidth / 2
+        return (CGPoint(x: x, y: primary.maxY - strip.frame.midY), bar.menus.map { axString($0, kAXTitleAttribute) ?? "" })
     }
 
     // Her ekranın menü çubuğu boyunca yalnız masaüstü katmanını yakalar: menü yazıları ve şeridin kendisi

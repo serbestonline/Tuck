@@ -25,6 +25,11 @@ if CommandLine.arguments.contains("--selftest") {
     exit(0)
 }
 
+/// Mac Türkçeyse Türkçe, değilse İngilizce.
+func T(_ tr: String, _ en: String) -> String {
+    Locale.preferredLanguages.first?.hasPrefix("tr") == true ? tr : en
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
@@ -39,16 +44,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "menubar.rectangle", accessibilityDescription: "Tuck")
         let menu = NSMenu()
-        let toggle = NSMenuItem(title: "Menüleri topla", action: #selector(toggle(_:)), keyEquivalent: "")
+        let toggle = NSMenuItem(title: T("Menüleri topla", "Tuck menus"), action: #selector(toggle(_:)), keyEquivalent: "")
         toggle.target = self
         toggle.state = .on
         menu.addItem(toggle)
-        let login = NSMenuItem(title: "Açılışta başlat", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        let login = NSMenuItem(title: T("Açılışta başlat", "Launch at login"), action: #selector(toggleLogin(_:)), keyEquivalent: "")
         login.target = self
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Tuck'tan çık", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: T("Tuck'tan çık", "Quit Tuck"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
 
         // İzin pencereleri ilk açılışta gelir; Erişilebilirlik izni gelene kadar şerit görünmez.
@@ -58,6 +63,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { _ = try? await SCShareableContent.current }   // Mac uygulamayı Ekran Kaydı listesine ancak gerçek bir denemede ekliyor
         }
         controller.start()
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--record"), args.count > i + 2 {
+            Demo.run(scenario: args[i + 1], dir: args[i + 2], controller: controller)
+        }
     }
 
     @objc private func toggle(_ item: NSMenuItem) {

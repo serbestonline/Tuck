@@ -42,7 +42,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 # Sabit imza olursa izinler derlemeler arasında korunur; sertifika yoksa geçici imzaya düşer.
-IDENTITY="Umbrella Yerel Imza"
+IDENTITY="${TUCK_SIGN_IDENTITY:-Umbrella Yerel Imza}"
 if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
     codesign --force --sign "$IDENTITY" "$APP"
 else
